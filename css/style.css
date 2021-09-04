@@ -1,0 +1,33 @@
+.bleu {
+    color: rgb(0, 132, 255);
+}
+
+.rouge {
+    color: rgb(255, 35, 35);
+}
+
+.vert {
+    color: rgb(0, 177, 94);
+}
+
+.box {
+    display: flex;
+    flex-direction: row;
+
+}
+
+ul {
+    list-style-type: none;
+}
+
+th:not(.sorted):not(.sorted_reverse):not(.sorted_nosort):after {
+    content: " \25B4\25BE"
+}
+
+.sorted:after {
+    content: " \25B4"
+}
+
+.sorted_reverse:after {
+    content: " \25BE"
+}

@@ -1,0 +1,26 @@
+<all>
+<p style="text-align: center">{props.data.date}</p>
+<table class="table text-center">
+    <thead></thead>
+    <tbody>
+        <tr>
+            <td>
+                <h1>Total</h1>
+                <ul>
+                    <li class="bleu">Cas : {props.data.totalConf}</li>
+                    <li class="rouge">Morts : {props.data.totalDeaths}</li>
+                    <li class="vert">Guéris : {props.data.totalRecov}</li>
+                </ul>
+            </td>
+            <td>
+                <h1>Aujourd'hui</h1>
+                <ul>
+                    <li class="bleu">Cas : {props.data.newConf}</li>
+                    <li class="rouge">Morts : {props.data.newDeaths}</li>
+                    <li class="vert">Guéris : {props.data.newRecov}</li>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</all>

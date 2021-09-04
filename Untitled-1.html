@@ -1,0 +1,116 @@
+<div class="container">
+    <div class="box">
+        <div>
+            <h1>Total</h1>
+            <ul id="total">
+
+            </ul>
+        </div>
+
+        <div>
+            <h1>Aujourd'hui</h1>
+            <ul id="auj">
+
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <form>
+        <div>
+            <input type="text"  id="codep" placeholder="Pays"/>
+            <select id="nbr" onchange="refr()">
+                <option value="190">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+    </form>
+</div>
+<script>
+    var change = function(attr) {
+        console.log(attr)
+    }
+</script>
+<div class="container">
+    <div class="box">
+        <div>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th value="pays" onclick="console.log(this.value)">Pays</th>
+                        <th value="cas" onclick="change(this.value)">Cas</th>
+                        <th value="gueris" onclick="change(this.value)">Guéris</th>
+                        <th value="morts" onclick="change(this.value)">Morts</th>
+                        <th value="castt" onclick="change(this.value)">Cas total</th>
+                        <th value="gueristt" onclick="change(this.value)">Guéris total</th>
+                        <th value="mortstt" onclick="change(this.value)">Morts total</th>
+                    </tr>
+                </thead>
+                <tbody id="tableau">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+    init();
+
+    function init() {
+        var url="https://api.covid19api.com/summary"
+
+        var total = ''
+
+        $.get(url, function(total) {
+            console.log(total)
+
+            total = ` 
+            <li class="bleu">Cas : ${total.Global.TotalConfirmed}</li>
+            <li class="rouge">Morts : ${total.Global.TotalDeaths}</li>
+            <li class="vert">Guéris : ${total.Global.TotalRecovered}</li>
+            `
+
+            $("#total").html(total)
+
+        })
+
+        $.get(url, function(auj) {
+            auj = ` 
+            <li class="bleu">Cas : ${auj.Global.NewConfirmed}</li>
+            <li class="rouge">Morts : ${auj.Global.NewDeaths}</li>
+            <li class="vert">Guéris : ${auj.Global.NewRecovered}</li>
+            `
+
+            $("#auj").html(auj)
+        })
+
+        $.get(url, function(gen) {
+            var nbr = document.getElementById("nbr").value;
+            console.log(nbr);
+            var val = [];
+            for(var i = 0; i < nbr; i++) {
+                val.push(`
+                
+                <tr>
+                    <th class="bleu"><a href="${gen.Countries[i].Country}">${gen.Countries[i].Country}</a></th>
+                    <th class="bleu">${gen.Countries[i].NewConfirmed}</th>
+                    <th class="vert">${gen.Countries[i].NewRecovered}</th>
+                    <th class="rouge">${gen.Countries[i].NewDeaths}</th>
+                    <th class="bleu">${gen.Countries[i].TotalConfirmed}</th>
+                    <th class="vert">${gen.Countries[i].TotalRecovered}</th>
+                    <th class="rouge">${gen.Countries[i].TotalDeaths}</th>
+                <tr>
+                `)
+
+                $("#tableau").append(val[i])
+            }
+        })
+    }
+})
+</script>

@@ -1,0 +1,168 @@
+<pays>
+<h1 class="text-center mt-5">{ window.location.pathname.split("/").pop() }</h1>
+<div class="container" style="text-align: center;">
+    <h1>Cumul</h1>
+    <canvas id="cumul" width="1000px" height="500px">
+    </canvas>
+</div>
+<div class="container" style="text-align: center;">
+    <h1>Différentiel</h1>
+    <canvas id="diff" width="1000px" height="500px">
+    </canvas>
+</div>
+<script>
+    export default {
+        onBeforeMount(props, state) {
+            let db = new localStorageDB("library", localStorage);
+            let pays = window.location.pathname.split("/").pop()
+            let moyennes
+            console.log(pays)
+            this.state.info = 0
+            let p = new Promise((resolve, reject) => {
+                let xhr = new XMLHttpRequest();
+                xhr.onerror = (() => {
+                    reject("Erreur !")
+                })
+                xhr.ontimeout = (() => {
+                    reject("Timeout !")
+                })
+
+                xhr.responseType = "json"
+                xhr.timeout = 1000
+                xhr.onload = function() {
+                    resolve
+                        (
+                            this.response
+                        )
+                }
+                xhr.open("GET", "https://api.covid19api.com/dayone/country/" + pays, true);
+                xhr.send();
+            })
+
+            p
+                .then((res) => {
+                    this.state.info = res;
+                    //console.log("1")
+                    //console.log(this.state.info)
+                    this.moyennes = this.getMoyennesDays(this.state.info)
+                    let fac = Math.max.apply(null, this.moyennes[0], this.moyennes[1], this.moyennes[2])
+                    let fac2 = Math.max.apply(null, this.moyennes[3], this.moyennes[4], this.moyennes[5])
+                    console.log(fac)
+                    console.log(this.moyennes)
+                    this.drawContours("cumul")
+                    this.drawContours("diff")
+                    this.drawLegend("cumul", fac, this.moyennes[6])
+                    this.drawLegend("diff", fac2, this.moyennes[6])
+                    this.drawChart("diff", this.moyennes[0], 'blue', fac)
+                    this.drawChart("diff", this.moyennes[1], 'red', fac)
+                    this.drawChart("diff", this.moyennes[2], 'green', fac)
+                    this.drawChart("cumul", this.moyennes[3], 'blue', fac2)
+                    this.drawChart("cumul", this.moyennes[4], 'red', fac2)
+                    this.drawChart("cumul", this.moyennes[5], 'blue', fac2)
+                    console.log(this.moyennes[6])
+                    this.update()
+                })
+
+        },
+
+        onMounted(props, state) {
+        },
+
+        drawContours(where) {
+            var c = document.getElementById(where)
+            var ctx = c.getContext("2d")
+            ctx.strokeStyle = "black"
+            ctx.lineWidth = 2
+            ctx.moveTo(100, 0)
+            ctx.lineTo(100, 400)
+            ctx.lineTo(1000, 400)
+            ctx.strokeStyle = "rgba(25, 25, 25, .1)"
+            ctx.lineWidth = 1
+            ctx.lineTo(1000, 0)
+            ctx.stroke()
+            for(let i = 1; i < 7; i++) {
+                ctx.moveTo(100, 400 - i*(400/6))
+                ctx.lineTo(1000, 400 - i*(400/6))
+                ctx.stroke()
+            }
+        },
+
+        drawLegend(where, fac, dates) {
+            var c = document.getElementById(where)
+            var ctx = c.getContext("2d")
+            ctx.font = "10px Arial"
+            for(let i = 0; i < 6; i++) {
+                var value = i*(fac/6)+(1/3)*fac
+                ctx.fillText(Math.round(value*100)/100, 10, 400 - i*(400/6))
+            }
+            ctx.fillText(Math.round((fac+(1/3)*fac)*100)/100, 10, 10)
+            ctx.save();
+            //ctx.rotate(45 * (Math.PI/180))
+            /*for(let j = 0; j < 104; j++) {
+                ctx.fillText(dates[j].slice(0, 10), 100 + j*900/104, 100 - j*900/104)
+            }*/
+            ctx.restore()
+        },
+
+        drawChart(where, table, couleur, fac, index) {
+            //console.log(couleur)
+            var c = document.getElementById(where)
+            var ctx = c.getContext("2d")
+            ctx.save()
+            ctx.moveTo((900/table.length)+100, 400)
+            for(let i = 0; i < table.length; i++) {
+                ctx.strokeStyle = couleur
+                let hauteur = (400 - table[i]/(fac/250))
+                ctx.lineTo((i*((900/table.length)))+(900/table.length)+100, hauteur);
+            }
+            ctx.stroke()
+            ctx.restore()
+        },
+
+        getMoyennesDays(info) {
+            console.log(info)
+            let moyennes = [], moycas = [], moymorts = [], moyrecov = [], moycumulcas = [], moycumulmorts = [], moycumulrecov = [], dates = []
+            let cas, morts, recov, cumulcas, cumulmorts, cumulrecov
+            let j = 0
+            cumulcas = 0, cumulmorts = 0, cumulrecov = 0
+            for(let i = 0; i < info.length; i++) {
+                cas = 0
+                morts = 0
+                recov = 0
+                cas += info[i].Confirmed
+                morts += info[i].Deaths
+                recov += info[i].Recovered
+                cumulcas += info[i].Confirmed
+                cumulmorts += info[i].Deaths
+                cumulrecov += info[i].Recovered
+                //console.log("jour " + i + "; cas : " + info[i].Confirmed)
+                if(i%4 == 1) {
+                    moycas[j] = (cas/4)
+                    moymorts[j] = (morts/4)
+                    moyrecov[j] = (recov/4)
+                    moycumulcas[j] = (cumulcas)
+                    moycumulmorts[j] = (cumulmorts)
+                    moycumulrecov[j] = (cumulrecov)
+                    dates[j] = info[i].Date
+                    //console.log(moycas[i])
+                    j++
+                }
+            }
+            //console.log(moycas)
+
+            moyennes[0] = moycas
+            moyennes[1] = moymorts
+            moyennes[2] = moyrecov
+            moyennes[3] = moycumulcas
+            moyennes[4] = moycumulmorts
+            moyennes[5] = moycumulrecov
+            moyennes[6] = dates
+
+            console.log(moyennes)
+
+
+            return moyennes
+        }
+    }
+</script>
+</pays>

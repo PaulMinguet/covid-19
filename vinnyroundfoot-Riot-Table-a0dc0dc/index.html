@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Example table</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="bower_components/underscore/underscore-min.js"></script>
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+   </head>
+    <body>
+        <div class="container">
+            <div class="col-md-12">
+                <h1 id="titre">Test Riot.js</h1>
+                <div class="col-md-3">
+                    <button id="refresh" onclick="chargeListe()">Refresh</button>
+                    <button id="Start" onclick="startLecture()">Démarrer</button>
+                    <button id="Stop" onclick="stopLecture()">Stopper</button>
+                </div>
+                
+                <div class="col-md-9">
+                    <div class="col-md-4">
+                        <button id="filtrer" onclick="filtrer()" >Filtrer</button>
+                        <button id="annulerfiltrer" onclick="annulerfiltrer()" >Annuler filtre</button>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <p>Colonne : <input id="filtreColonne" type="text"/></p>
+                        <p>Valeur : <input id="filtreValeur"  type="text"/></p>
+                    </div>
+                    
+                </div>
+                
+                <div class="col-md-12">
+                <rtable id="tab2" 
+                        data-id="table1" 
+                        colExcluded="id_course, distance" 
+                        sort="column:position,   order:up" 
+                        styles="tableClass:table table-hover table-condensed, colHeaderClass:warning, activeLineClass:active "
+                        ><h2>Liste 1</h2></rtable>
+                </div>
+            </div>
+        </div>
+       
+        <script src="bower_components/riot/riot.js"></script>
+        <script src="build/rtable.js"  ></script>
+        <script>
+
+            var maListe = monter();
+             
+            function startLecture() {
+                 intervalID = setInterval(monter, 5000);
+            }               
+
+            function stopLecture() {
+                clearInterval(intervalID);
+            }    
+       
+            function monter() {
+              return riot.mount("rtable#tab2"); 
+            }
+            
+            function filtrer() {
+                maListe[0].filter = {'column' : $('#filtreColonne').val(), 'value' : $('#filtreValeur').val()};
+                maListe[0].filterTable();
+            }
+       
+            function annulerfiltrer() {
+                maListe[0].filter = {'column' : '', 'value' : ''};
+                maListe[0].filterTable();    
+            }       
+       
+            function chargeListe() {
+                $.ajax({
+                    //url: "data/liste1.json",
+                    url:"http://chj/pages/resultats.php?type_cmd=courseParID&type_course=mini&id_course=20150508",
+                    async: true ,
+                    dataType: 'json'
+                })
+                .done(function(data) {
+                    //maListe[0].sort = {column:'age', order:'up'};
+                    for (i=0;i<data.length;i++) {
+                        data.position = Number(data.position);
+                    }
+                    maListe[0].start((data));
+                               
+                 })
+                 .fail(function(e) {
+                     maListe[0].start(Array(e.responseText));
+                     console.log(e);
+                 });
+                
+            }
+            
+            var startLecture = function () {
+                this.intervalID = setInterval(chargeListe, 5000);
+            };             
+
+            var stopLecture = function () {
+                clearInterval(this.intervalID);
+            };            
+            
+        </script>
+    </body>
+</html>

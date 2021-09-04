@@ -1,0 +1,37 @@
+<app>
+<router base={ base }>
+<h1 class="text-center mt-5">Covid 19</h1>
+<br><br>
+<br>
+<route path="">
+    <tablepays pays = {state.pays}></tablepays>
+</route>
+<route path="(.*)pays\/(.*)">
+    <pays></pays> 
+</route>
+</router>
+
+
+<script>
+    let loc = window.location;
+    export default {
+
+        base: `${loc.protocol}//${loc.host}${loc.pathname ? loc.pathname : '' }`,
+
+        onBeforeMount(props,state){
+
+            let db = new localStorageDB("library", localStorage);
+            this.model.setDB(db)
+            
+            state.pays = ({
+                all: db.queryAll("pays")
+            })
+        },
+
+        onBeforeUpdate(props,state){
+
+        }
+    }
+</script>
+
+</app>

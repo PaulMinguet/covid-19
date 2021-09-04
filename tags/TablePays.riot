@@ -1,0 +1,171 @@
+<tablepays>
+<all data = {state.all}></all>
+<div class="container">
+    <form>
+        <div>
+            <input type="text"  id="paysSrc" placeholder="Pays" onkeyup={ completion }/>
+            &nbsp;
+            <select id="nbr" onchange={ nbrPays }>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="190">All</option>
+            </select>
+        </div>
+    </form>
+</div>
+<div class="container">
+    <div style="text-align: center">
+        Page { page + 1 } / { Math.ceil(state.secondTab.length / pagesize) }
+        <div style="float:left;">
+            <button class="btn" disabled={ page == 0 } onclick={first}> &laquo; First </button>
+            <button class="btn" disabled={ page == 0 } onclick={prev}> &lt; Prev </button>
+        </div>
+        <div style="float:right;">
+            <button class="btn" disabled={ page == Math.floor(state.newTab.length / pagesize) || page+1 == Math.ceil(state.newTab.length / pagesize)} onclick={next}> Next &gt; </button>
+            <button class="btn" disabled={ page == Math.floor(state.newTab.length / pagesize) || page+1 == Math.ceil(state.newTab.length / pagesize)} onclick={last}> Last &raquo; </button>
+        </div>
+    </div>
+</div>
+<br>
+    <table id="paysTable" class="table table-hover">
+        <thead>
+            <tr class="bleu">
+                <th id="nom" onclick={ sort } class="sorted">Pays</th>
+                <th id="conf" onclick={ sort }>Cas</th>
+                <th id="recov" onclick={ sort }>Guéris</th>
+                <th id="deaths" onclick={ sort }>Morts</th>
+                <th id="totalConf" onclick={ sort }>Cas total</th>
+                <th id="totalRecov" onclick={ sort }>Guéris total</th>
+                <th id="totalDeaths" onclick={ sort }>Morts total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr each={(pays, index) in state.afficheTab}>
+                <td class="bleu"><a href='pays/{pays.nom}'>{pays.nom}</a></td>
+                <td class="bleu">{pays.conf}</td>
+                <td class="vert">{pays.recov}</td>
+                <td class="rouge">{pays.deaths}</td>
+                <td class="bleu">{pays.totalConf}</td>
+                <td class="vert">{pays.totalRecov}</td>
+                <td class="rouge">{pays.totalDeaths}</td>
+            </tr>
+        </tbody>
+    </table>
+    <script>
+        export default {
+            onBeforeMount(props, state) {
+
+                let db = new localStorageDB("library", localStorage);
+                
+                state.all = ({
+                    date: db.queryAll("global")[0].date,
+                    totalConf: db.queryAll("global")[0].totalConf,
+                    totalDeaths: db.queryAll("global")[0].totalDeaths,
+                    totalRecov: db.queryAll("global")[0].totalRecov,
+                    newConf: db.queryAll("global")[0].newConf,
+                    newDeaths: db.queryAll("global")[0].newDeaths,
+                    newRecov: db.queryAll("global")[0].newRecov
+                })
+                
+
+                state.newTab = props.pays.all
+                state.afficheTab = state.newTab
+                state.secondTab = state.afficheTab
+                this.page = 0
+                state.afficheTab = state.afficheTab.slice(this.page * 20, this.page+1 * 20)
+                console.log(state.newTab)
+                this.pagesize = 20
+
+            },
+            sort(e) {
+                let targ = e.target.id
+                //console.log(targ)
+                let all = document.getElementsByTagName('th')
+                let elem = document.getElementById(targ)
+                for(let i = 0; i < all.length; i++) {
+                    if(all[i] != elem)
+                        all[i].className = ''
+                }
+                if(elem.classList.contains('sorted')) {
+                    elem.classList.add('sorted_reverse')
+                    elem.classList.remove('sorted')
+                    if(targ == "nom")
+                        this.state.afficheTab = this.state.afficheTab.sort((a, b) => (a[targ] > b[targ] ? -1 : 1))
+                    else
+                        this.state.afficheTab = this.state.afficheTab.sort((a, b) => (parseInt(b[targ]) - parseInt(a[targ])))
+                } else if(elem.classList.contains('sorted_reverse')) {
+                    elem.classList.add('sorted')
+                    elem.classList.remove('sorted_reverse')
+                    if(targ == "nom")
+                        this.state.afficheTab = this.state.afficheTab.sort((a, b) => (a[targ] < b[targ] ? -1 : 1))
+                    else
+                        this.state.afficheTab = this.state.afficheTab.sort((a, b) => (parseInt(a[targ]) - parseInt(b[targ])))
+                } else {
+                    elem.classList.add('sorted')
+                    if(targ == "nom")
+                        this.state.afficheTab = this.state.afficheTab.sort((a, b) => (a[targ] < b[targ] ? -1 : 1))
+                    else
+                        this.state.afficheTab = this.state.afficheTab.sort((a, b) => (parseInt(a[targ]) - parseInt(b[targ])))
+                }
+                this.update()
+            },
+
+            completion(e) {
+                let valeur = e.target.value
+                let td = null
+                this.state.afficheTab = this.state.newTab
+                if(valeur == "")
+                    this.state.afficheTab = this.state.newTab
+                else {
+                    this.state.afficheTab = this.state.afficheTab.filter(e => e["nom"].toLowerCase().includes(valeur.toLowerCase()))
+                }
+                this.state.secondTab = this.state.afficheTab
+                this.update()
+            },
+
+            nbrPays(e) {
+                this.page = 0
+                this.state.afficheTab = this.state.newTab
+                let valeur = e.target.value
+                this.pagesize = valeur
+                this.state.afficheTab = this.state.secondTab.slice(this.page * this.pagesize, (this.page+1) * this.pagesize)
+                this.update()
+            },
+
+            first() {
+                this.page = 0
+                this.state.afficheTab = this.state.secondTab.slice(this.page * this.pagesize, (this.page+1) * this.pagesize)
+                this.update()
+            },
+
+            prev() {
+                console.log(this.state.afficheTab)
+                if(this.page > 0)
+                    this.page--
+                this.state.afficheTab = this.state.secondTab.slice(this.page * this.pagesize, (this.page+1) * this.pagesize)
+                console.log(this.state.afficheTab)
+                this.update()
+            },
+
+            next() {
+                console.log(this.state.afficheTab)
+                if(this.page < (this.state.newTab.length / this.pagesize) - 1) {
+                    this.page++
+                }
+                this.state.afficheTab = this.state.secondTab.slice(this.page * this.pagesize, (this.page+1) * this.pagesize)
+                console.log(this.state.afficheTab)
+                this.update()
+            },
+
+            last() {
+                this.page = Math.ceil(this.state.newTab.length / this.pagesize) -1
+                this.state.afficheTab = this.state.secondTab.slice(this.page * this.pagesize, (this.page+1) * this.pagesize)
+                this.update()
+            }
+        }
+
+    </script>
+</tablepays>
